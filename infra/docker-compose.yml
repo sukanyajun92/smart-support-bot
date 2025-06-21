@@ -1,0 +1,15 @@
+version: '3.9'
+
+services:
+  user_service:
+    build:
+      context: ..
+      dockerfile: infra/Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - infra/.env
+    volumes:
+      - ../user_service:/app/user_service
+      - ../tests:/app/tests
+      - ../requirements.txt:/app/requirements.txt
