@@ -8,8 +8,8 @@ services:
     ports:
       - "8000:8000"
     env_file:
-      - infra/.env
+      - .env
     volumes:
-      - ../user_service:/app/user_service
+      - ../services/user_service:/app/user_service
       - ../tests:/app/tests
       - ../requirements.txt:/app/requirements.txt

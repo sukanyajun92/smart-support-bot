@@ -14,9 +14,9 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY user_service/ user_service/
+COPY services/user_service/ user_service/
 COPY tests/ tests/
-COPY .env .
+COPY infra/.env .
 
 EXPOSE 8000
 
