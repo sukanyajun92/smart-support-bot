@@ -1,14 +1,41 @@
-from fastapi import FastAPI, Depends, HTTPException
-from fastapi.security import OAuth2PasswordRequestForm
+# user_service/main.py
+from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from user_service import schemas
+from user_service import models, schemas
 from user_service.auth import verify_password, get_password_hash, create_access_token
-from user_service.dependencies import get_db, get_current_user
-from user_service.models import UserDB
+from user_service.dependencies import get_db, get_current_user, engine
+from user_service.models import UserDB, Base
 from datetime import timedelta
 from sqlalchemy.exc import IntegrityError
+import random
 
 app = FastAPI()
+
+# 🛠️ Create tables on app startup
+Base.metadata.create_all(bind=engine)
+
+# 🔧 Seed 10 users if table is empty
+def seed_users():
+    from user_service.dependencies import SessionLocal
+    db = SessionLocal()
+    try:
+        if db.query(UserDB).count() == 0:
+            for i in range(1, 11):
+                email = f"user{i}@example.com"
+                user = UserDB(
+                    email=email,
+                    name=f"User {i}",
+                    hashed_password=get_password_hash("password123"),
+                    preferences="chat,genAI" if i % 2 == 0 else "cloud,backend"
+                )
+                db.add(user)
+            db.commit()
+            print("✅ Seeded 10 users")
+    finally:
+        db.close()
+
+seed_users()
 
 @app.post("/signup", response_model=schemas.User)
 def signup(user: schemas.UserCreate, db: Session = Depends(get_db)):
@@ -38,3 +65,8 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
 @app.get("/me", response_model=schemas.User)
 def get_me(current_user: UserDB = Depends(get_current_user)):
     return current_user
+
+@app.get("/users", response_model=list[schemas.User])
+def list_users(db: Session = Depends(get_db)):
+    users = db.query(UserDB).all()
+    return users
